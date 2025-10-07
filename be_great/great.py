@@ -772,8 +772,15 @@ class GReaT:
         with fs.open(path + "/config.json", "r") as f:
             attributes = json.load(f)
 
-        # Create new be_great model instance
-        great = cls(attributes["llm"])
+        # Create new be_great model instance with the same configuration
+        great = cls(
+            llm=attributes["llm"],
+            experiment_dir=attributes.get("experiment_dir", "trainer_great"),
+            epochs=attributes.get("epochs", 100),
+            batch_size=attributes.get("batch_size", 8),
+            efficient_finetuning=attributes.get("efficient_finetuning", ""),
+            float_precision=attributes.get("float_precision", None),
+        )
 
         # Set all attributes
         for k, v in attributes.items():
