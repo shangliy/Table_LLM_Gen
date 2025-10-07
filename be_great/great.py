@@ -117,16 +117,31 @@ class GReaT:
                     "This function requires the 'peft' package. Please install it with - pip install peft==0.9.0"
                 )
 
+            # Detect target modules based on model architecture
+            model_type = self.model.config.model_type
+            if model_type == "gpt2":
+                target_modules = ["c_attn"]
+            elif model_type == "llama":
+                target_modules = ["q_proj", "v_proj"]
+            elif model_type in ["gpt_neox", "gptj"]:
+                target_modules = ["query_key_value"]
+            elif model_type == "opt":
+                target_modules = ["q_proj", "v_proj"]
+            else:
+                # Default: try to find attention modules automatically
+                logging.warning(f"Model type '{model_type}' not explicitly supported. Using default target modules.")
+                target_modules = ["q_proj", "v_proj"]
+
+            logging.info(f"Using LoRA target modules: {target_modules} for model type: {model_type}")
+
             # Define LoRA Config
             lora_config = LoraConfig(
                 r=16,  # only training 0.16% of the parameters of the model
                 lora_alpha=32,
-                target_modules=[
-                    "c_attn"
-                ],  # this is specific for gpt2 model, to be adapted
+                target_modules=target_modules,
                 lora_dropout=0.05,
                 bias="none",
-                task_type=TaskType.CAUSAL_LM,  # this is specific for gpt2 model, to be adapted
+                task_type=TaskType.CAUSAL_LM,
             )
             # prepare int-8 model for training
             self.model = prepare_model_for_int8_training(self.model)
