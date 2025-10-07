@@ -74,6 +74,65 @@ model.save("s3://my_bucket")
 model = GReaT.load_from_dir("s3://my_bucket")
 ```
 
+## Efficient Fine-Tuning with LoRA
+
+GReaT now supports efficient fine-tuning using **LoRA (Low-Rank Adaptation)**, which dramatically reduces memory usage and training time while maintaining generation quality. This enables training with larger language models on consumer GPUs.
+
+### Using LoRA with GReaT
+
+```python
+from be_great import GReaT
+from sklearn.datasets import fetch_california_housing
+
+data = fetch_california_housing(as_frame=True).frame
+
+# Enable LoRA efficient fine-tuning
+model = GReaT(
+    llm='distilgpt2',  # Works with GPT-2, LLaMA, GPT-NeoX, OPT models
+    efficient_finetuning='lora',  # Enable LoRA
+    batch_size=8,
+    epochs=50,
+    fp16=True
+)
+model.fit(data)
+synthetic_data = model.sample(n_samples=100)
+```
+
+### LoRA with Large Language Models (LLaMA)
+
+LoRA enables training larger models like LLaMA on standard GPUs:
+
+```python
+from be_great import GReaT
+from sklearn.datasets import load_iris
+
+# Load sample data
+data = load_iris(as_frame=True).frame
+
+# Train with LLaMA using LoRA - only ~0.14% of parameters are trainable!
+model = GReaT(
+    llm='unsloth/Llama-3.2-1B-Instruct',  # Or any LLaMA model
+    efficient_finetuning='lora',
+    batch_size=2,
+    epochs=50,
+    fp16=True,
+    gradient_accumulation_steps=4
+)
+model.fit(data)
+synthetic_data = model.sample(n_samples=100, temperature=0.7)
+```
+
+**Benefits of LoRA:**
+- **Reduced Memory**: Train only ~0.1-0.2% of model parameters
+- **Faster Training**: Significantly reduced training time
+- **GPU Efficient**: Enables training larger models on consumer GPUs
+- **Automatic Detection**: Target modules are automatically selected based on model architecture (GPT-2, LLaMA, GPT-NeoX, OPT)
+
+**Requirements**: Install PEFT library for LoRA support:
+```bash
+pip install peft==0.9.0
+```
+
 ## Optimizing GReaT for Challenging Datasets
 
 When working with small datasets or datasets with many features, GReaT offers specialized parameters to improve generation quality:
